@@ -23,29 +23,78 @@ char *read_commands(void){
         }
     }
 
-    line[strlen(line)-1]='\0';
+    if(line[strlen(line)-1]=='\n'){
+        line[strlen(line)-1]='\0';
+    }
+    if(line[strlen(line)-1]==' '){
+        line[strlen(line)-1]='\0';
+    }
 
     return line;
 }
 
-void parse_spaces(char *commands, char **args){
+void parse_spaces(char *commands, char *args[]){
     int i = 0;
-
-    long int size_of_commands = strlen(commands)-1;
+    int count_args=0;
+    long int size_of_commands = strlen(commands);
+    char *commands_aux = malloc(size_of_commands*sizeof(char*));
+    memcpy(commands_aux, commands, strlen(commands));
 
     for(i; i < size_of_commands; i++){
-        args[i] = strsep(&commands, " ");
+        char *aux = strsep(&commands_aux, " ");
+        args[i]=aux;
+        count_args++;
         if(args[i] == NULL) 
+            break;
+    }
+
+    if(strcmp(args[0], "")==0){
+        for(i=0; i < count_args; i++){
+            args[i]=args[i+1];
+        }
+    }
+
+}
+
+int parse_pipes(char* commands, char *multiple_args[], int number_of_pipes){
+    int i=0;
+    
+    char *commands_aux = malloc(strlen(commands)*sizeof(char*));
+    memcpy(commands_aux, commands, strlen(commands)-1);
+
+    for(i=0;i<number_of_pipes+1; i++){
+        multiple_args[i] = strsep(&commands_aux, "|");
+        if(multiple_args[i] == NULL) 
             break;
     }
 }
 
-int process_argumets(char *commands, char **args){
-    parse_spaces(commands,args);
-    return EXECUTION_STANDART;
+int verify_number_of_pipes(char* commands){
+    long int size_of_commands = strlen(commands)-1;
+    int i=0;
+    int count=0;
+    
+    for(i=0;i<size_of_commands; i ++){
+        if(commands[i]=='|'){
+            count++;
+        }
+    }
+
+    return count;
 }
 
-void execute_normal(char **args){
+int process_argumets(char *commands, char *args[], char *multiple_args[]){
+    int number_of_pipes= verify_number_of_pipes(commands);
+    if(number_of_pipes > 0){
+        parse_pipes(commands, multiple_args, number_of_pipes);
+        return EXECUTION_PIPE;
+    }else{
+        parse_spaces(commands,args);
+        return EXECUTION_STANDART;
+    }
+}
+
+void execute_normal(char *args[]){
     int pid = fork();
 
     if(pid == -1){
@@ -62,18 +111,22 @@ void execute_normal(char **args){
     }
 }
 
-void execute_commands(int type, char **args){
+void execute_pipe(char** multiple_args){
+    printf("AINDA NÃO ESTA PRONTO\n");
+}
+
+void execute_commands(int type, char *args[], char *multiple_args[]){
     if(type == EXECUTION_STANDART){
         execute_normal(args);
     }else if(type == EXECUTION_PIPE){
-        printf("AINDA NÃO ESTA PRONTO\n");
+        execute_pipe(multiple_args);
     }
 }
 
 void run_shell(){
     char *input;
     char *args[MAX_LENGTH];
-    char *commands[MAX_LENGTH];
+    char *multiple_args[MAX_LENGTH];
     int status = 1;
     int type_of_execution = 0;
 
@@ -82,9 +135,9 @@ void run_shell(){
         
         input = read_commands();
         
-        type_of_execution = process_argumets(input, args);
+        type_of_execution = process_argumets(input, args, multiple_args);
 
-        execute_commands(type_of_execution, args);
+        execute_commands(type_of_execution, args, multiple_args);
 
         free(input);
     }
