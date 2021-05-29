@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_LENGTH 500
 #define EXIT_WITH_SUCESS 0
 #define EXIT_WITH_FAILURE 1
 #define EXECUTION_STANDART 1
@@ -21,6 +22,9 @@ char *read_commands(void){
             exit(EXIT_WITH_FAILURE);
         }
     }
+
+    line[strlen(line)-1]='\0';
+
     return line;
 }
 
@@ -28,8 +32,6 @@ void parse_spaces(char *commands, char **args){
     int i = 0;
 
     long int size_of_commands = strlen(commands)-1;
-    
-    commands[strlen(commands)-1]='\0';
 
     for(i; i < size_of_commands; i++){
         args[i] = strsep(&commands, " ");
@@ -69,26 +71,22 @@ void execute_commands(int type, char **args){
 }
 
 void run_shell(){
-    char *commands;
-    char **args;
-    int status;
+    char *input;
+    char *args[MAX_LENGTH];
+    char *commands[MAX_LENGTH];
+    int status = 1;
     int type_of_execution = 0;
 
     while (status) {
         printf("\nshell>");
         
-        //Função que lê a informação de cada linha
-        commands = read_commands();
+        input = read_commands();
         
-        //Função que faz o split dos argumentos caso tenha espaço ou pipe
-        char** args = malloc(strlen(commands) * sizeof(char**));
-        type_of_execution = process_argumets(commands, args);
+        type_of_execution = process_argumets(input, args);
 
-        //Função que executa os comandos
         execute_commands(type_of_execution, args);
 
-        free(commands);
-        free(args);
+        free(input);
     }
 }
 
