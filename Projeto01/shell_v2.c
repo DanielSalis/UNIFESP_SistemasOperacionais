@@ -3,16 +3,14 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <errno.h>
 
-#define MAX 50
-
-#define MAX_LENGTH 500
 #define EXIT_WITH_SUCESS 0
 #define EXIT_WITH_FAILURE 1
-#define EXECUTION_STANDART 1
-#define EXECUTION_PIPE 2
 #define OPERATOR_PIPE 1
 #define OPERATOR_SEMICOLON 2
+
+int run_in_background = 0;
 
 char get_operator_type(int type){
     if(type == OPERATOR_PIPE){
@@ -35,7 +33,7 @@ int get_operators(int type, char **argv){
     return count;
 }
 
-int get_char_pos(int type, int i, char **argv){
+int find_operator_by_position(int type, int i, char **argv){
     char character = get_operator_type(type);
     for (i;argv[i];i++){
         if (*argv[i] == character){
@@ -45,17 +43,20 @@ int get_char_pos(int type, int i, char **argv){
     return -1;
 }
 
-int exec_command(char **cmd){
+int exec_default(char **args){
     int pid;
     pid = fork();
     if (pid == 0){
-        if (execvp(cmd[0], cmd) < 0){
-            perror("execvp exec_command");
+        if (execvp(args[0], args) < 0){
+            printf("dentro do if, erno = %d\n",errno);
+            perror("execvp");
             return -1;
         }
     }
     else if (pid > 0){
-        waitpid(pid, NULL, 0);
+        if(!run_in_background){
+            waitpid(pid, NULL, 0);
+        }
     }
     return 1;
 }
@@ -67,7 +68,7 @@ int exec_pipes(char **argv, int n_pipes){
     int auxiliar_fd = STDIN_FILENO;
 
     for (int j = 0; j <= n_pipes; j++){
-        caracter_position = get_char_pos(OPERATOR_PIPE, i, argv);
+        caracter_position = find_operator_by_position(OPERATOR_PIPE, i, argv);
         char **current_command = &argv[i];
         
         if (caracter_position != -1){
@@ -109,12 +110,12 @@ int exec_semmicolons(char **args, int number_of_semicolons){
     int position;
     for (int i = 0; i <= number_of_semicolons; i++) {
         printf("\n");
-        position = get_char_pos(OPERATOR_SEMICOLON, counter, args);
+        position = find_operator_by_position(OPERATOR_SEMICOLON, counter, args);
         char **current_command = &args[counter];
         
         current_command[position-counter] = NULL;
         
-        exec_command(current_command);
+        exec_default(current_command);
         
         counter = position+1;
     }
@@ -139,6 +140,13 @@ char *read_commands(void){
     if(line[strlen(line)-1]==' '){
         line[strlen(line)-1]='\0';
     }
+    if(line[strlen(line)-1]=='&'){
+        run_in_background = 1;
+        line[strlen(line)-1]='\0';
+        if(line[strlen(line)-1]==' '){
+            line[strlen(line)-1]='\0';
+        }
+    }
 
     return line;
 }
@@ -158,9 +166,11 @@ void parse_spaces(char *commands, char *args[]){
             break;
     }
 
-    if(strcmp(args[0], "")==0){
-        for(i=0; i < count_args; i++){
-            args[i]=args[i+1];
+    if(count_args > 0){
+        if(strcmp(args[0], "")==0){
+            for(i=0; i < count_args; i++){
+                args[i]=args[i+1];
+            }
         }
     }
 
@@ -174,15 +184,19 @@ char **process_argumets(char *commands){
 }
 
 void process_commands(char** args){
-    int number_of_pipes = get_operators(OPERATOR_PIPE, args);
-    if (number_of_pipes > 0){
-        exec_pipes(args, number_of_pipes);
+    if(run_in_background==1){
+        exec_default(args);
     }else{
-        int number_of_semicolons = get_operators(OPERATOR_SEMICOLON, args);
-        if(number_of_semicolons > 0){
-            exec_semmicolons(args, number_of_semicolons);
+        int number_of_pipes = get_operators(OPERATOR_PIPE, args);
+        if (number_of_pipes > 0){
+            exec_pipes(args, number_of_pipes);
         }else{
-            exec_command(args);
+            int number_of_semicolons = get_operators(OPERATOR_SEMICOLON, args);
+            if(number_of_semicolons > 0){
+                exec_semmicolons(args, number_of_semicolons);
+            }else{
+                exec_default(args);
+            }
         }
     }
 }
