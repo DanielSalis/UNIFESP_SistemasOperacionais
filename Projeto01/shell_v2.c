@@ -61,13 +61,13 @@ int exec_default(char **args){
     return 1;
 }
 
-int exec_pipes(char **argv, int n_pipes){
+int exec_pipes(char **argv, int number_of_pipes){
     int fd[2]; 
     int i = 0; 
     int caracter_position;
     int auxiliar_fd = STDIN_FILENO;
 
-    for (int j = 0; j <= n_pipes; j++){
+    for (int j = 0; j <= number_of_pipes; j++){
         caracter_position = find_operator_by_position(OPERATOR_PIPE, i, argv);
         char **current_command = &argv[i];
         
@@ -85,7 +85,7 @@ int exec_pipes(char **argv, int n_pipes){
             close(fd[0]);
             dup2(auxiliar_fd, STDIN_FILENO);
 
-            if (j < n_pipes)
+            if (j < number_of_pipes)
                 dup2(fd[1], STDOUT_FILENO); 
 
             if (execvp(current_command[0], current_command) < 0){
@@ -97,7 +97,6 @@ int exec_pipes(char **argv, int n_pipes){
             close(fd[1]);
             waitpid(pid_processo_filho, NULL, 0);
         }else{
-            perror("fork");
             return -1;
         }
         i = caracter_position + 1;
