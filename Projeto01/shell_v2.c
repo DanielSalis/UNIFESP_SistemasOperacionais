@@ -14,8 +14,6 @@
 #define OPERATOR_PIPE 1
 #define OPERATOR_SEMICOLON 2
 
-int number_of_pipes;
-
 char get_operator_type(int type){
     if(type == OPERATOR_PIPE){
         return '|';
@@ -62,7 +60,7 @@ int exec_command(char **cmd){
     return 1;
 }
 
-int exec_command_pipes(char **argv, int n_pipes){
+int exec_pipes(char **argv, int n_pipes){
     int fd[2]; 
     int i = 0; 
     int caracter_position;
@@ -178,7 +176,7 @@ char **process_argumets(char *commands){
 void process_commands(char** args){
     int number_of_pipes = get_operators(OPERATOR_PIPE, args);
     if (number_of_pipes > 0){
-        exec_command_pipes(args, number_of_pipes);
+        exec_pipes(args, number_of_pipes);
     }else{
         int number_of_semicolons = get_operators(OPERATOR_SEMICOLON, args);
         if(number_of_semicolons > 0){
