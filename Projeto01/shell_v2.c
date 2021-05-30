@@ -48,7 +48,7 @@ int get_char_pos(int type, int i, char **argv){
 }
 
 int exec_command(char **cmd){
-    pid_t pid;
+    int pid;
     pid = fork();
     if (pid == 0){
         if (execvp(cmd[0], cmd) < 0){
@@ -65,60 +65,60 @@ int exec_command(char **cmd){
 int exec_command_pipes(char **argv, int n_pipes){
     int fd[2]; 
     int i = 0; 
-    int n;
+    int caracter_position;
     int auxiliar_fd = STDIN_FILENO;
 
     for (int j = 0; j <= n_pipes; j++){
-        n = get_char_pos(OPERATOR_PIPE, i, argv);
-         char **cmd = &argv[i];
-        if (n != -1)
-            cmd[n - i] = NULL;
+        caracter_position = get_char_pos(OPERATOR_PIPE, i, argv);
+        char **current_command = &argv[i];
+        
+        if (caracter_position != -1){
+            current_command[caracter_position - i] = NULL;
+        }
 
         if (pipe(fd) < 0){
             perror("pipe");
             return -1;
         }
 
-        pid_t filho = fork();
-        if (filho == 0){
+        int pid_processo_filho = fork();
+        if (pid_processo_filho == 0){
             close(fd[0]);
             dup2(auxiliar_fd, STDIN_FILENO);
 
             if (j < n_pipes)
                 dup2(fd[1], STDOUT_FILENO); 
 
-            if (execvp(cmd[0], cmd) < 0){
+            if (execvp(current_command[0], current_command) < 0){
                 perror("execvp pipe filho");
                 return -1;
             }
-        }
-        else if (filho > 0){
+        }else if (pid_processo_filho > 0){
             auxiliar_fd = fd[0];
-            close(fd[1]); // pai nao vai escrever
-            waitpid(filho, NULL, 0);
-        }
-        else{
+            close(fd[1]);
+            waitpid(pid_processo_filho, NULL, 0);
+        }else{
             perror("fork");
             return -1;
         }
-        i = n + 1;
+        i = caracter_position + 1;
     }
     return 1;
 }
 
 int exec_semmicolons(char **args, int number_of_semicolons){
-    int j = 0;
+    int counter = 0;
     int position;
     for (int i = 0; i <= number_of_semicolons; i++) {
         printf("\n");
-        position = get_char_pos(OPERATOR_SEMICOLON, j, args);
-        char **current_command = &args[j];
+        position = get_char_pos(OPERATOR_SEMICOLON, counter, args);
+        char **current_command = &args[counter];
         
-        current_command[position-j] = NULL;
+        current_command[position-counter] = NULL;
         
         exec_command(current_command);
         
-        j = position+1;
+        counter = position+1;
     }
 }
 
@@ -168,7 +168,7 @@ void parse_spaces(char *commands, char *args[]){
 
 }
 
-char**  process_argumets(char *commands){
+char **process_argumets(char *commands){
     char** args = malloc(strlen(commands)*sizeof(char**));
     parse_spaces(commands,args);
     
