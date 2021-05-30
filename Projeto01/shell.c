@@ -9,6 +9,9 @@
 #define EXIT_WITH_FAILURE 1
 #define EXECUTION_STANDART 1
 #define EXECUTION_PIPE 2
+#define PIPE 1
+
+int number_of_pipes=0;
 
 char *read_commands(void){
     char *line = NULL;
@@ -60,7 +63,7 @@ int parse_pipes(char* commands, char *multiple_args[], int number_of_pipes){
     int i=0;
     
     char *commands_aux = malloc(strlen(commands)*sizeof(char*));
-    memcpy(commands_aux, commands, strlen(commands)-1);
+    memcpy(commands_aux, commands, strlen(commands));
 
     for(i=0;i<number_of_pipes+1; i++){
         multiple_args[i] = strsep(&commands_aux, "|");
@@ -84,7 +87,7 @@ int verify_number_of_pipes(char* commands){
 }
 
 int process_argumets(char *commands, char *args[], char *multiple_args[]){
-    int number_of_pipes= verify_number_of_pipes(commands);
+    number_of_pipes= verify_number_of_pipes(commands);
     if(number_of_pipes > 0){
         parse_pipes(commands, multiple_args, number_of_pipes);
         return EXECUTION_PIPE;
@@ -100,26 +103,75 @@ void execute_normal(char *args[]){
     if(pid == -1){
         printf("\nFALHOU!!\n");
     }else if(pid == 0){
+        printf("\nCAIU NO FLHO!!!\n");
         int exec_value = execvp(args[0], args);
         if(exec_value < 0){
             printf("\nComando não existe\n");
         }
         exit(EXIT_WITH_SUCESS);
     }else{
-        wait(NULL);
+        printf("\nCAIU NO PAI XD!!!\n");
+        waitpid(pid, NULL, 0);
         return;
     }
 }
 
-void execute_pipe(char** multiple_args){
-    printf("AINDA NÃO ESTA PRONTO\n");
+int exec_command_pipes(char **argv, int j, int aux, int fd[]){
+
+        if (pipe(fd) < 0)
+        {
+            perror("pipe");
+            return -1;
+        }
+
+        pid_t filho = fork();
+        if (filho == 0)
+        { // filho executa comando
+            close(fd[0]);
+            dup2(aux, STDIN_FILENO); //duplica leitura do pipe sobre entrada padrao
+
+            if (j <= number_of_pipes)
+                dup2(fd[1], STDOUT_FILENO); // duplica saida padrao do filho para escrita do pipe
+
+            if (execvp(argv[0], argv) < 0)
+            {
+                perror("execvp pipe filho");
+                return -1;
+            }
+        }
+        else if (filho > 0)
+        { // pai
+            aux = fd[0];
+            close(fd[1]); // pai nao vai escrever
+            waitpid(filho, NULL, 0);
+        }
+        else
+        {
+            perror("fork");
+            return -1;
+        }
+
+     return 1;
+}
+
+void execute_pipe(char** multiple_args, char** args){
+    int quantity_of_args = number_of_pipes + 1;
+    int i=0;
+    int aux = STDIN_FILENO;
+    int fd[2];
+
+    for(i;i<quantity_of_args; i++){
+        char *current_command = multiple_args[i];
+        parse_spaces(current_command, args);
+        exec_command_pipes(args, i, aux, fd);
+    }
 }
 
 void execute_commands(int type, char *args[], char *multiple_args[]){
     if(type == EXECUTION_STANDART){
         execute_normal(args);
     }else if(type == EXECUTION_PIPE){
-        execute_pipe(multiple_args);
+        execute_pipe(multiple_args, args);
     }
 }
 
