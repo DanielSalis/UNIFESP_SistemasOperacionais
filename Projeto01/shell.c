@@ -220,6 +220,7 @@ void run_shell(){
 }
 
 int main(int argc, char **argv){
+    system("clear");
     run_shell();
     return EXIT_WITH_SUCESS;
 }
