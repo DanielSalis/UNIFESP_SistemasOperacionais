@@ -3,16 +3,16 @@
 //Memória Virtual = vai conter a lista todas as páginas ex: 1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6
 //Memória Real    = vai conter o número de frames ex com 4 frames : | 1 | | 2 | | 3 | | 4 |
 
-struct tipo_pagina
+struct tipo_frame
 {
     int frame_id;
     int pagina_id;
     int tempo;
 };
 
-typedef struct tipo_pagina pagina;
+typedef struct tipo_frame frame;
 
-void iniciar_memoria_real(pagina mr_frames[], int numero_frames_mr)
+void iniciar_memoria_real(frame mr_frames[], int numero_frames_mr)
 {
     int i = 0;
     for (i; i < numero_frames_mr; ++i)
@@ -23,7 +23,7 @@ void iniciar_memoria_real(pagina mr_frames[], int numero_frames_mr)
     }
 }
 
-int exec_mru(pagina mr_frames[], int numero_frames)
+int exec_mru(frame mr_frames[], int numero_frames)
 {
     int i;
     int min = mr_frames[0].tempo;
@@ -41,7 +41,7 @@ int exec_mru(pagina mr_frames[], int numero_frames)
     return posicao_vetor;
 }
 
-void print_tempos(pagina mr_frames[], int numero_frames_mr)
+void print_tempos(frame mr_frames[], int numero_frames_mr)
 {
     int i;
     for (i = 0; i < numero_frames_mr; ++i)
@@ -50,7 +50,7 @@ void print_tempos(pagina mr_frames[], int numero_frames_mr)
     }
 }
 
-void print_config_pagina(pagina mr_frames[], int numero_frames_mr)
+void print_config_pagina(frame mr_frames[], int numero_frames_mr)
 {
     int i;
     for (i = 0; i < numero_frames_mr; ++i)
@@ -59,7 +59,7 @@ void print_config_pagina(pagina mr_frames[], int numero_frames_mr)
     }
 }
 
-void exec_pagination(int numero_paginas_mv, int numero_frames_mr, pagina mr_frames[], int mv_paginas[])
+void exec_pagination(int numero_paginas_mv, int numero_frames_mr, frame mr_frames[], int mv_paginas[])
 {
     int i, j;
     int contador = 0, page_miss = 0;
@@ -129,7 +129,7 @@ int main(int argc, char const *argv[])
     printf("Numero de paginas na memoria virtual: ");
     scanf("%d", &numero_paginas_mv);
 
-    pagina mr_frames[numero_frames_mr];
+    frame mr_frames[numero_frames_mr];
     int mv_paginas[numero_paginas_mv];
 
     printf("Digite o identificador de cada pagina: \n");
