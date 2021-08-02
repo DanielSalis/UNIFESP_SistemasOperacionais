@@ -46,7 +46,7 @@ void print_tempos(frame mr_frames[], int numero_frames_mr)
     int i;
     for (i = 0; i < numero_frames_mr; ++i)
     {
-       printf("frame[%d]: %d\n", i, mr_frames[i].tempo);
+        printf("frame[%d]: %d\n", i, mr_frames[i].tempo);
     }
 }
 
@@ -55,7 +55,17 @@ void print_config_pagina(frame mr_frames[], int numero_frames_mr)
     int i;
     for (i = 0; i < numero_frames_mr; ++i)
     {
-       printf("frame[%d]: %d\n", i, mr_frames[i].pagina_id);
+        printf("frame[%d]: %d\n", i, mr_frames[i].pagina_id);
+    }
+}
+
+void print_all(frame mr_frames[], int numero_frames_mr)
+{
+    int i;
+    for (i = 0; i < numero_frames_mr; ++i)
+    {
+        printf("frame-paginaID[%d]: %d ", i, mr_frames[i].pagina_id);
+        printf("frame-tempo[%d]: %d\n", i, mr_frames[i].tempo);
     }
 }
 
@@ -105,14 +115,16 @@ void exec_pagination(int numero_paginas_mv, int numero_frames_mr, frame mr_frame
             page_miss++;
             mr_frames[posicao_atual].pagina_id = mv_paginas[i];
             mr_frames[posicao_atual].tempo = contador;
-            printf("\nPage miss foi incrementado!\n");
         }
 
-        printf("\nTempos rodada[%d]\n", i);
-        print_tempos(mr_frames, numero_frames_mr);
+        // printf("\nTempos rodada[%d]\n", i);
+        // print_tempos(mr_frames, numero_frames_mr);
+
+        // printf("\nConfiguracao das paginas na rodada[%d]\n", i);
+        // print_config_pagina(mr_frames, numero_frames_mr);
 
         printf("\nConfiguracao das paginas na rodada[%d]\n", i);
-        print_config_pagina(mr_frames, numero_frames_mr);
+        print_all(mr_frames, numero_frames_mr);
     }
 
     printf("\n\nPage miss = %d", page_miss);
