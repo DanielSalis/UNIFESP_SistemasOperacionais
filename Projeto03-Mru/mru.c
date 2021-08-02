@@ -79,12 +79,11 @@ void exec_pagination(int numero_paginas_mv, int numero_frames_mr, frame mr_frame
     for (i = 0; i < numero_paginas_mv; ++i)
     {
         frames_vazios = pagina_atual_alocada = 1;
-
+        contador++;
         for (j = 0; j < numero_frames_mr; ++j)
         {
             if (mr_frames[j].pagina_id == mv_paginas[i])
             {
-                contador++;
                 mr_frames[j].tempo = contador;
                 frames_vazios = 0;
                 pagina_atual_alocada = 0;
@@ -98,7 +97,6 @@ void exec_pagination(int numero_paginas_mv, int numero_frames_mr, frame mr_frame
             {
                 if (mr_frames[j].pagina_id == -1)
                 {
-                    contador++;
                     page_miss++;
                     mr_frames[j].pagina_id = mv_paginas[i];
                     mr_frames[j].tempo = contador;
@@ -111,7 +109,6 @@ void exec_pagination(int numero_paginas_mv, int numero_frames_mr, frame mr_frame
         if (pagina_atual_alocada == 1)
         {
             posicao_atual = exec_mru(mr_frames, numero_frames_mr);
-            contador++;
             page_miss++;
             mr_frames[posicao_atual].pagina_id = mv_paginas[i];
             mr_frames[posicao_atual].tempo = contador;
