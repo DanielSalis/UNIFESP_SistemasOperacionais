@@ -46,7 +46,7 @@ int exec_sync(char nome1[], char nome2[])
 		read_file = read(file_origin, buffer, BLOCO);
 		if (read_file == -1)
 		{
-			perror("read()");
+			printf("\nERRO! Na leitura do arquivo\n");
 			close(file_origin);
 			close(file_destination);
 			return 0;
