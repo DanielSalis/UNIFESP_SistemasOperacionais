@@ -33,13 +33,13 @@ int exec_sync(char nome1[], char nome2[])
 		close(file_origin);
 		return 0;
 	}
-	int nr;
+	int nr = 1;
 	int ns;
 	int nw;
 	int n;
 	unsigned char buffer[BLOCO];
 	void *ptr_buff;
-	do
+	while (nr > 0)
 	{
 		nr = read(file_origin, buffer, BLOCO);
 		if (nr == -1)
@@ -54,21 +54,19 @@ int exec_sync(char nome1[], char nome2[])
 			ptr_buff = buffer;
 			nw = nr;
 			ns = 0;
-			do
+			for (nw; nw > 0; nw -= n, ns += n)
 			{
 				n = write(file_destination, ptr_buff + ns, nw);
 				if (n == -1)
 				{
-					perror("write()");
+					printf("\nERRO! Na escrita do arquivo\n");
 					close(file_origin);
 					close(file_destination);
 					return 0;
 				}
-				ns += n;
-				nw -= n;
-			} while (nw > 0);
+			};
 		}
-	} while (nr > 0);
+	};
 	close(file_origin);
 	close(file_destination);
 }
@@ -81,7 +79,6 @@ int run_application(struct dirent **namelist, struct dirent **namelist_backup, i
 	int i = 0;
 	int j = 0;
 	time_t start, finish;
-
 
 	while (exec)
 	{
