@@ -87,18 +87,20 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 		i = 2;
 		while (i < dir1)
 		{
-			char nome1[255] = "minhapasta/";
+			char origem[255];
+			strcpy(origem, dir_origem);
 			j = 2;
 			while (j < dir1)
 			{
-				char nome2[255] = "minhapasta_backup/";
+				char dest[255];
+				strcpy(dest, dir_dest);
 				if (strcmp(namelist[i]->d_name, namelist_backup[j]->d_name) == 0)
 				{
-					if (stat(strcat(nome1, namelist[i]->d_name), &buf) != -1)
+					if (stat(strcat(origem, namelist[i]->d_name), &buf) != -1)
 					{
 						printf("%s\n", ctime(&buf.st_mtime));
 					}
-					if (stat(strcat(nome2, namelist_backup[j]->d_name), &buf_backup) != -1)
+					if (stat(strcat(dest, namelist_backup[j]->d_name), &buf_backup) != -1)
 					{
 						printf("%s\n", ctime(&buf_backup.st_mtime));
 					}
@@ -108,7 +110,7 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 
 					if (compare_time(start, finish) > 0)
 					{
-						exec_sync(nome1, nome2);
+						exec_sync(origem, dest);
 					}
 				}
 				j++;
