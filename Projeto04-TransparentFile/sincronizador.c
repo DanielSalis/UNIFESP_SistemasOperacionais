@@ -33,31 +33,31 @@ int exec_sync(char nome1[], char nome2[])
 		close(file_origin);
 		return 0;
 	}
-	int nr = 1;
-	int ns;
-	int nw;
-	int n;
+	int read_file = 1;
+	int swap_file;
+	int wrote_file;
+	int file;
 	unsigned char buffer[BLOCO];
 	void *ptr_buff;
-	while (nr > 0)
+	while (read_file > 0)
 	{
-		nr = read(file_origin, buffer, BLOCO);
-		if (nr == -1)
+		read_file = read(file_origin, buffer, BLOCO);
+		if (read_file == -1)
 		{
 			perror("read()");
 			close(file_origin);
 			close(file_destination);
 			return 0;
 		}
-		else if (nr > 0)
+		else if (read_file > 0)
 		{
 			ptr_buff = buffer;
-			nw = nr;
-			ns = 0;
-			for (nw; nw > 0; nw -= n, ns += n)
+			wrote_file = read_file;
+			swap_file = 0;
+			for (wrote_file; wrote_file > 0; wrote_file -= file, swap_file += file)
 			{
-				n = write(file_destination, ptr_buff + ns, nw);
-				if (n == -1)
+				file = write(file_destination, ptr_buff + swap_file, wrote_file);
+				if (file == -1)
 				{
 					printf("\nERRO! Na escrita do arquivo\n");
 					close(file_origin);
