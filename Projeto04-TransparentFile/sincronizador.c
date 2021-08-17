@@ -8,7 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define BLOCO 4096
+#define BUFFER_SIZE 3000
 
 typedef struct dirent dir_properties;
 
@@ -17,33 +17,37 @@ int compare_time(time_t start, time_t end)
 	return start > end ? 1 : 0;
 }
 
-int exec_sync(char nome1[], char nome2[])
+int exec_sync(char original_file[], char backup_file[])
 {
 	printf("\n- - - - Sincronizando - - - -\n");
 	int file_origin;
 	int file_destination;
-	file_origin = open(nome1, O_RDONLY);
+	file_origin = open(original_file, O_RDONLY);
 	if (file_origin == -1)
 	{
 		printf("\nFALHA! Arquivo Inexistente\n");
 		return 0;
 	}
-	file_destination = open(nome2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	file_destination = open(backup_file, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (file_destination == -1)
 	{
-		printf("\nFALHA! Arquivo Inexistente\n");
-		close(file_origin);
-		return 0;
+		// touch(backup_file, 0700);
+		FILE *out = fopen(backup_file, "w");
+		fclose(out);
+		return exec_sync(original_file, backup_file);
+		// printf("\nFALHA! Arquivo Inexistente\n");
+		// close(file_origin);
+		// return 0;
 	}
 	int read_file = 1;
 	int swap_file;
 	int wrote_file;
 	int file;
-	unsigned char buffer[BLOCO];
+	unsigned char buffer[BUFFER_SIZE];
 	void *ptr_buff;
 	while (read_file > 0)
 	{
-		read_file = read(file_origin, buffer, BLOCO);
+		read_file = read(file_origin, buffer, BUFFER_SIZE);
 		if (read_file == -1)
 		{
 			printf("\nERRO! Na leitura do arquivo\n");
@@ -73,7 +77,7 @@ int exec_sync(char nome1[], char nome2[])
 	close(file_destination);
 }
 
-int run_application(dir_properties **namelist, dir_properties **namelist_backup, int dir1, int dir2, char dir_origem[], char dir_dest[])
+int run_application(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[])
 {
 	struct stat buf;
 	struct stat buf_backup;
@@ -85,12 +89,12 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 	while (exec)
 	{
 		i = 2;
-		while (i < dir1)
+		while (i < number_of_files_dir)
 		{
 			char origem[255];
 			strcpy(origem, dir_origem);
 			j = 2;
-			while (j < dir1)
+			while (j < number_of_files_dir)
 			{
 				char dest[255];
 				strcpy(dest, dir_dest);
@@ -121,10 +125,37 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 	}
 }
 
+int create_files_into_backup(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[])
+{
+	int i = 0;
+	int j = 0;
+	int exec = 1;
+
+	while (i < number_of_files_dir)
+	{
+
+		if (strcmp(namelist[i]->d_name, namelist_backup[i]->d_name) != 0)
+		{
+			char concated_string[] = "minhapasta_backup/";
+			char source[255];
+			strcpy(source, namelist[i]->d_name);
+			strcat(concated_string, source);
+			FILE *out = fopen(concated_string, "w");
+			fclose(out);
+			number_of_files_dir_backup = scandir(dir_dest, &namelist_backup, NULL, alphasort);
+			if(number_of_files_dir == number_of_files_dir_backup){
+				run_application(namelist, namelist_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest);
+			}
+		}
+
+		i++;
+	}
+}
+
 int main(int argc, char **argv)
 {
-	int dir1;
-	int dir2;
+	int number_of_files_dir;
+	int number_of_files_dir_backup;
 
 	char dir_origem[255] = "minhapasta/";
 	char dir_dest[255] = "minhapasta_backup/";
@@ -134,14 +165,20 @@ int main(int argc, char **argv)
 
 	if (argc == 1)
 	{
-		dir1 = scandir(dir_origem, &fileList, NULL, alphasort);
-		dir2 = scandir(dir_dest, &fileList_backup, NULL, alphasort);
+		number_of_files_dir = scandir(dir_origem, &fileList, NULL, alphasort);
+		number_of_files_dir_backup = scandir(dir_dest, &fileList_backup, NULL, alphasort);
 	}
-	if (dir1 == -1 || dir2 == -1)
+	if (number_of_files_dir == -1 || number_of_files_dir_backup == -1)
 		printf("\nFALHA! Diretório Inexistente\n");
+
+	if (number_of_files_dir != number_of_files_dir_backup)
+	{
+		create_files_into_backup(fileList, fileList_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest);
+	}
+
 	else
 	{
-		run_application(fileList, fileList_backup, dir1, dir2, dir_origem, dir_dest);
+		run_application(fileList, fileList_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest);
 	}
 	return 0;
 }
