@@ -10,6 +10,8 @@
 
 #define BLOCO 4096
 
+typedef struct dirent dir_properties;
+
 int compare_time(time_t start, time_t end)
 {
 	return start > end ? 1 : 0;
@@ -71,7 +73,7 @@ int exec_sync(char nome1[], char nome2[])
 	close(file_destination);
 }
 
-int run_application(struct dirent **namelist, struct dirent **namelist_backup, int dir1, int dir2, char dir_origem[], char dir_dest[])
+int run_application(dir_properties **namelist, dir_properties **namelist_backup, int dir1, int dir2, char dir_origem[], char dir_dest[])
 {
 	struct stat buf;
 	struct stat buf_backup;
@@ -119,25 +121,25 @@ int run_application(struct dirent **namelist, struct dirent **namelist_backup, i
 
 int main(int argc, char **argv)
 {
-	struct dirent **namelist;
-	struct dirent **namelist_backup;
-
 	int dir1;
 	int dir2;
 
 	char dir_origem[255] = "minhapasta/";
 	char dir_dest[255] = "minhapasta_backup/";
 
+	dir_properties **fileList;
+	dir_properties **fileList_backup;
+
 	if (argc == 1)
 	{
-		dir1 = scandir(dir_origem, &namelist, NULL, alphasort);
-		dir2 = scandir(dir_dest, &namelist_backup, NULL, alphasort);
+		dir1 = scandir(dir_origem, &fileList, NULL, alphasort);
+		dir2 = scandir(dir_dest, &fileList_backup, NULL, alphasort);
 	}
-	if (dir1 < 0 || dir2 < 0)
+	if (dir1 == -1 || dir2 == -1)
 		printf("\nFALHA! Diretório Inexistente\n");
 	else
 	{
-		run_application(namelist, namelist_backup, dir1, dir2, dir_origem, dir_dest);
+		run_application(fileList, fileList_backup, dir1, dir2, dir_origem, dir_dest);
 	}
 	return 0;
 }
