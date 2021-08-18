@@ -83,7 +83,7 @@ int exec_folder_sync(dir_properties **namelist, dir_properties **namelist_backup
 	while (i < number_of_files_dir)
 	{
 
-		if (number_of_files_dir_backup == 2 || number_of_files_dir_backup == number_of_files_dir - 1 || strcmp(namelist[i]->d_name, namelist_backup[i]->d_name) != 0)
+		if (number_of_files_dir_backup == 2 || number_of_files_dir_backup < number_of_files_dir || strcmp(namelist[i]->d_name, namelist_backup[i]->d_name) != 0)
 		{
 			char concated_string[] = "minhapasta_backup/";
 			char source[255];
@@ -101,7 +101,7 @@ int exec_folder_sync(dir_properties **namelist, dir_properties **namelist_backup
 	}
 }
 
-int run_application(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[], int force_exec)
+int run_application(dir_properties **dir_name_list, dir_properties **dir_name_list_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[], int force_exec)
 {
 	struct stat buf;
 	struct stat buf_backup;
@@ -123,13 +123,13 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 			{
 				char dest[255];
 				strcpy(dest, dir_dest);
-				if (strcmp(namelist[i]->d_name, namelist_backup[j]->d_name) == 0)
+				if (strcmp(dir_name_list[i]->d_name, dir_name_list_backup[j]->d_name) == 0)
 				{
-					if (stat(strcat(origem, namelist[i]->d_name), &buf) != -1)
+					if (stat(strcat(origem, dir_name_list[i]->d_name), &buf) != -1)
 					{
 						printf("%s\n", ctime(&buf.st_mtime));
 					}
-					if (stat(strcat(dest, namelist_backup[j]->d_name), &buf_backup) != -1)
+					if (stat(strcat(dest, dir_name_list_backup[j]->d_name), &buf_backup) != -1)
 					{
 						printf("%s\n", ctime(&buf_backup.st_mtime));
 					}
@@ -137,12 +137,12 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 					start = buf.st_mtime;
 					finish = buf_backup.st_mtime;
 
-					int nmbr_files_d1 = scandir(dir_origem, &namelist, NULL, alphasort);
-					int nmbr_files_backup = scandir(dir_dest, &namelist_backup, NULL, alphasort);
+					int nmbr_files_d1 = scandir(dir_origem, &dir_name_list, NULL, alphasort);
+					int nmbr_files_backup = scandir(dir_dest, &dir_name_list_backup, NULL, alphasort);
 
 					if (nmbr_files_d1 != nmbr_files_backup)
 					{
-						exec_folder_sync(namelist, namelist_backup, nmbr_files_d1, nmbr_files_backup, dir_origem, dir_dest);
+						exec_folder_sync(dir_name_list, dir_name_list_backup, nmbr_files_d1, nmbr_files_backup, dir_origem, dir_dest);
 					}
 
 					if (compare_time(start, finish) > 0 || fs)
