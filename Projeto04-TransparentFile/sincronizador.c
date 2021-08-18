@@ -17,6 +17,8 @@ int compare_time(time_t start, time_t end)
 	return start > end ? 1 : 0;
 }
 
+int run_application(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[], int force_exec);
+
 int exec_sync(char original_file[], char backup_file[])
 {
 	printf("\n- - - - Sincronizando - - - -\n");
@@ -31,13 +33,9 @@ int exec_sync(char original_file[], char backup_file[])
 	file_destination = open(backup_file, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (file_destination == -1)
 	{
-		// touch(backup_file, 0700);
-		FILE *out = fopen(backup_file, "w");
-		fclose(out);
-		return exec_sync(original_file, backup_file);
-		// printf("\nFALHA! Arquivo Inexistente\n");
-		// close(file_origin);
-		// return 0;
+		printf("\nFALHA! Arquivo Inexistente\n");
+		close(file_origin);
+		return 0;
 	}
 	int read_file = 1;
 	int swap_file;
@@ -77,13 +75,40 @@ int exec_sync(char original_file[], char backup_file[])
 	close(file_destination);
 }
 
-int run_application(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[])
+int exec_folder_sync(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[])
+{
+	int i = 2;
+	int exec = 1;
+
+	while (i < number_of_files_dir)
+	{
+
+		if (number_of_files_dir_backup == 2 || number_of_files_dir_backup == number_of_files_dir - 1 || strcmp(namelist[i]->d_name, namelist_backup[i]->d_name) != 0)
+		{
+			char concated_string[] = "minhapasta_backup/";
+			char source[255];
+			strcpy(source, namelist[i]->d_name);
+			strcat(concated_string, source);
+			FILE *out = fopen(concated_string, "w");
+			fclose(out);
+			number_of_files_dir_backup = scandir(dir_dest, &namelist_backup, NULL, alphasort);
+			if (number_of_files_dir == number_of_files_dir_backup)
+			{
+				run_application(namelist, namelist_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest, 1);
+			}
+		}
+		i++;
+	}
+}
+
+int run_application(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[], int force_exec)
 {
 	struct stat buf;
 	struct stat buf_backup;
 	int exec = 1;
 	int i = 0;
 	int j = 0;
+	int fs = force_exec;
 	time_t start, finish;
 
 	while (exec)
@@ -112,7 +137,15 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 					start = buf.st_mtime;
 					finish = buf_backup.st_mtime;
 
-					if (compare_time(start, finish) > 0)
+					int nmbr_files_d1 = scandir(dir_origem, &namelist, NULL, alphasort);
+					int nmbr_files_backup = scandir(dir_dest, &namelist_backup, NULL, alphasort);
+
+					if (nmbr_files_d1 != nmbr_files_backup)
+					{
+						exec_folder_sync(namelist, namelist_backup, nmbr_files_d1, nmbr_files_backup, dir_origem, dir_dest);
+					}
+
+					if (compare_time(start, finish) > 0 || fs)
 					{
 						exec_sync(origem, dest);
 					}
@@ -121,20 +154,20 @@ int run_application(dir_properties **namelist, dir_properties **namelist_backup,
 			}
 			i++;
 		}
+		fs = 0;
 		sleep(5);
 	}
 }
 
-int create_files_into_backup(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[])
+void create_files_into_backup(dir_properties **namelist, dir_properties **namelist_backup, int number_of_files_dir, int number_of_files_dir_backup, char dir_origem[], char dir_dest[])
 {
-	int i = 0;
-	int j = 0;
+	int i = 2;
 	int exec = 1;
+	int force_exec = 1;
 
 	while (i < number_of_files_dir)
 	{
-
-		if (strcmp(namelist[i]->d_name, namelist_backup[i]->d_name) != 0)
+		if (number_of_files_dir_backup == 2 || number_of_files_dir_backup < number_of_files_dir  || strcmp(namelist[i]->d_name, namelist_backup[i]->d_name) != 0)
 		{
 			char concated_string[] = "minhapasta_backup/";
 			char source[255];
@@ -143,11 +176,11 @@ int create_files_into_backup(dir_properties **namelist, dir_properties **namelis
 			FILE *out = fopen(concated_string, "w");
 			fclose(out);
 			number_of_files_dir_backup = scandir(dir_dest, &namelist_backup, NULL, alphasort);
-			if(number_of_files_dir == number_of_files_dir_backup){
-				run_application(namelist, namelist_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest);
+			if (number_of_files_dir == number_of_files_dir_backup)
+			{
+				run_application(namelist, namelist_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest, 1);
 			}
 		}
-
 		i++;
 	}
 }
@@ -178,7 +211,7 @@ int main(int argc, char **argv)
 
 	else
 	{
-		run_application(fileList, fileList_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest);
+		run_application(fileList, fileList_backup, number_of_files_dir, number_of_files_dir_backup, dir_origem, dir_dest, 0);
 	}
 	return 0;
 }
