@@ -127,11 +127,11 @@ int run_application(dir_properties **dir_name_list, dir_properties **dir_name_li
 				{
 					if (stat(strcat(origem, dir_name_list[i]->d_name), &buf) != -1)
 					{
-						printf("%s\n", ctime(&buf.st_mtime));
+						printf("Ultima atualização pasta original: %s\n", ctime(&buf.st_mtime));
 					}
 					if (stat(strcat(dest, dir_name_list_backup[j]->d_name), &buf_backup) != -1)
 					{
-						printf("%s\n", ctime(&buf_backup.st_mtime));
+						printf("Ultimo Backup: %s\n", ctime(&buf_backup.st_mtime));
 					}
 
 					start = buf.st_mtime;
@@ -196,11 +196,9 @@ int main(int argc, char **argv)
 	dir_properties **fileList;
 	dir_properties **fileList_backup;
 
-	if (argc == 1)
-	{
-		number_of_files_dir = scandir(dir_origem, &fileList, NULL, alphasort);
-		number_of_files_dir_backup = scandir(dir_dest, &fileList_backup, NULL, alphasort);
-	}
+	number_of_files_dir = scandir(dir_origem, &fileList, NULL, alphasort);
+	number_of_files_dir_backup = scandir(dir_dest, &fileList_backup, NULL, alphasort);
+	
 	if (number_of_files_dir == -1 || number_of_files_dir_backup == -1)
 		printf("\nFALHA! Diretório Inexistente\n");
 
